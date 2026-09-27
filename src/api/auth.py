@@ -41,6 +41,21 @@ def database():
         CREATE TABLE IF NOT EXISTS attempts (
           bucket TEXT PRIMARY KEY, started_at INTEGER NOT NULL, count INTEGER NOT NULL);
         ''')
+        # Seed owner account if in Vercel or cloud/production environment
+        if os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME') or os.environ.get('SEED_OWNER'):
+            from src.api.owner import OWNER_EMAIL
+            owner_row = db.execute('SELECT 1 FROM owner_access WHERE email=?', (OWNER_EMAIL,)).fetchone()
+            if not owner_row:
+                existing = db.execute('SELECT id FROM users WHERE mobile=?', (OWNER_EMAIL,)).fetchone()
+                if not existing:
+                    uid = db.execute(
+                        'INSERT INTO users(mobile, password_hash, created_at) VALUES (?, ?, ?)',
+                        (OWNER_EMAIL, 'scrypt$16384$8$5$4772ffdafeaddab791ec9d70d95e8aec$69de6fbcd281026ee097b6344a6ec38b20bf6b47376edded791dd73e76f77de5', 1790341417)
+                    ).lastrowid
+                else:
+                    uid = existing['id']
+                db.execute('INSERT OR IGNORE INTO owner_access(user_id, email) VALUES (?, ?)', (uid, OWNER_EMAIL))
+                db.commit()
         schema = db.execute("SELECT sql FROM sqlite_master WHERE name='plan_preferences'").fetchone()[0]
         if "'enterprise'" not in schema:
             db.execute('BEGIN IMMEDIATE')
@@ -139,7 +154,8 @@ def issue_session(request, response, user_id):
         if old:
             db.execute('DELETE FROM sessions WHERE token_hash=?', (fingerprint(old),))
         db.execute('INSERT INTO sessions VALUES (?,?,?)', (fingerprint(token), user_id, int(time.time())+SESSION_SECONDS))
-    response.set_cookie(COOKIE, token, max_age=SESSION_SECONDS, httponly=True, secure=request.url.scheme=='https', samesite='strict', path='/')
+    secure = request.url.scheme == 'https' or bool(request.headers.get('x-forwarded-proto') == 'https')
+    response.set_cookie(COOKIE, token, max_age=SESSION_SECONDS, httponly=True, secure=secure, samesite='strict', path='/')
     with database() as db:
         owner = db.execute('SELECT 1 FROM owner_access WHERE user_id=?', (user_id,)).fetchone()
     return {'ok': True, 'redirect': '/dashboard' if owner else '/plans'}

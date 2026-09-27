@@ -8,7 +8,7 @@ from src.api.auth import database, ROOT
 
 router = APIRouter(tags=['Customer plans'])
 PLANS = {
-    'professional': {'id':'professional', 'name':'Professional', 'monthly_price_usd':999, 'currency':'USD', 'interval':'month', 'stripe_payment_link':'https://buy.stripe.com/test_5kQ9AL0P45hPe1p6ce2oE0i'},
+    'professional': {'id':'professional', 'name':'Professional', 'monthly_price_usd':999, 'currency':'USD', 'interval':'month', 'stripe_payment_link':'https://buy.stripe.com/test_dRmbIT7ds5hPbTheIK2oE0l'},
     'bank': {'id':'bank', 'name':'Bank', 'monthly_price_usd':4999, 'currency':'USD', 'interval':'month', 'stripe_payment_link':'https://buy.stripe.com/test_bJe4grdBQ6lT7D18km2oE0j'},
     'enterprise': {'id':'enterprise', 'name':'Financial Enterprises', 'monthly_price_usd':9999, 'currency':'USD', 'interval':'month', 'stripe_payment_link':'https://buy.stripe.com/test_6oUaEPfJYh0xaPd8km2oE0k'},
 }

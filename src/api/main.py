@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 
 from dataclasses import asdict
 from threading import Lock
@@ -28,7 +29,10 @@ app.include_router(plans_router)
 from src.api.owner import router as owner_router
 app.include_router(owner_router)
 app.middleware('http')(protect)
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1', 'localhost', '[::1]', 'testserver'])
+allowed_hosts = ['127.0.0.1', 'localhost', '[::1]', 'testserver', '*.vercel.app', '*.onrender.com', 'vercel.app', 'onrender.com']
+if os.environ.get('ALLOWED_HOSTS'):
+    allowed_hosts.extend([h.strip() for h in os.environ['ALLOWED_HOSTS'].split(',') if h.strip()])
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 LEDGER = PermissionedLedger()
 LEDGER_LOCK = Lock()
 

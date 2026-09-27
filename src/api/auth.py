@@ -206,8 +206,10 @@ async def protect(request: Request, call_next):
     # Non-simple custom header blocks browser cross-site form requests; no CORS is enabled.
     if request.method not in ('GET', 'HEAD', 'OPTIONS'):
         origin = request.headers.get('origin')
-        expected = f'{request.url.scheme}://{request.url.netloc}'
-        if request.headers.get('x-srp-request') != '1' or (origin and origin != expected) or request.headers.get('sec-fetch-site') == 'cross-site':
+        proto = request.headers.get('x-forwarded-proto') or request.url.scheme
+        host = request.headers.get('x-forwarded-host') or request.url.netloc
+        valid_origins = {f'{request.url.scheme}://{request.url.netloc}', f'{proto}://{host}'}
+        if request.headers.get('x-srp-request') != '1' or (origin and origin not in valid_origins) or request.headers.get('sec-fetch-site') == 'cross-site':
             return JSONResponse({'detail': 'Request origin could not be verified.'}, status_code=403)
     public = path in ('/', '/signin', '/health', '/auth/signup', '/auth/signin', '/favicon.ico', '/plans', '/plans/catalog', '/owner/setup', '/auth/owner/setup')
     request.state.user = await run_in_threadpool(current_user, request)

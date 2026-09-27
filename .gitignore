@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+.venv312/
+.test-deps/
+data/*.sqlite3
+data/*.sqlite3-journal
+*.log
+.vercel/
+.system_generated/
